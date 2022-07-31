@@ -71,6 +71,12 @@ void Zone::Setup(
   overload_count = 0;
   extend_alarm_count = 0;
 
+  auto monitor = _monitor.lock();
+  if (!monitor) {
+    Warning("Monitor has disappeared.");
+    return;
+  }
+
   pg_image = new Image(monitor->Width(), monitor->Height(), 1, ZM_SUBPIX_ORDER_NONE);
   pg_image->Clear();
   pg_image->Fill(0xff, polygon);
@@ -117,6 +123,12 @@ Zone::~Zone() {
 }
 
 void Zone::RecordStats(const Event *event) {
+  auto monitor = _monitor.lock();
+  if (!monitor) {
+    Warning("Monitor has disappeared.");
+    return;
+  }
+
   std::string sql = stringtf(
       "INSERT INTO Stats SET MonitorId=%d, ZoneId=%d, EventId=%" PRIu64 ", FrameId=%d, "
       "PixelDiff=%d, AlarmPixels=%d, FilterPixels=%d, BlobPixels=%d, "
@@ -198,6 +210,12 @@ bool Zone::CheckAlarms(const Image *delta_image) {
   if (overload_count) {
     Info("In overload mode, %d frames of %d remaining", overload_count, overload_frames);
     overload_count--;
+    return false;
+  }
+
+  auto monitor = _monitor.lock();
+  if (!monitor) {
+    Warning("Monitor has disappeared.");
     return false;
   }
 
@@ -1013,7 +1031,7 @@ void Zone::std_alarmedpixels(
 }  // end void Zone::std_alarmedpixels(Image* pdiff_image, const Image* ppoly_image, unsigned int* pixel_count, unsigned int* pixel_sum)
 
 Zone::Zone(const Zone &z) :
-    monitor(z.monitor),
+    _monitor(z._monitor),
     id(z.id),
     label(z.label),
     type(z.type),
@@ -1042,8 +1060,14 @@ Zone::Zone(const Zone &z) :
 {
   std::copy(z.blob_stats, z.blob_stats+256, blob_stats);
   pg_image = z.pg_image ? new Image(*z.pg_image) : nullptr;
-  ranges = new Range[monitor->Height()];
-  std::copy(z.ranges, z.ranges+monitor->Height(), ranges);
+
+  auto monitor = _monitor.lock();
+  if (!monitor) {
+    Warning("Monitor has disappeared.");
+  } else {
+    ranges = new Range[monitor->Height()];
+    std::copy(z.ranges, z.ranges+monitor->Height(), ranges);
+  }
   image = z.image ? new Image(*z.image) : nullptr;
   //z.stats.debug("Copy Source");
   stats.DumpToLog("Copy dest");

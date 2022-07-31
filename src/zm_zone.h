@@ -62,7 +62,7 @@ class Zone {
 
   protected:
     // Inputs
-    const std::shared_ptr<Monitor> monitor;
+    const std::weak_ptr<Monitor> _monitor;
 
     unsigned int         id;
     std::string label;
@@ -147,7 +147,7 @@ class Zone {
         int p_overload_frames=0,
         int p_extend_alarm_frames=0)
           :
-            monitor(p_monitor),
+            _monitor(p_monitor),
             id(p_id),
             label(p_label),
             blob_stats{},
@@ -158,7 +158,7 @@ class Zone {
 
     Zone(const std::shared_ptr<Monitor>&p_monitor, unsigned int p_id, const char *p_label, const Polygon &p_polygon)
       :
-        monitor(p_monitor),
+        _monitor(p_monitor),
         id(p_id),
         label(p_label),
         blob_stats{},
@@ -168,7 +168,7 @@ class Zone {
     }
     Zone(const std::shared_ptr<Monitor>&p_monitor, unsigned int p_id, const char *p_label, ZoneType p_type, const Polygon &p_polygon)
       :
-        monitor(p_monitor),
+        _monitor(p_monitor),
         id(p_id),
         label(p_label),
         blob_stats{},
