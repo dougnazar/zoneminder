@@ -81,7 +81,10 @@ void zmFifoDbgOutput(
     int len = va_arg(arg_ptr, int);
     dbg_ptr += snprintf(dbg_ptr, str_size-(dbg_ptr-dbg_string), "%d:", len);
     for ( int i = 0; i < len; i++ ) {
-      dbg_ptr += snprintf(dbg_ptr, str_size-(dbg_ptr-dbg_string), " %02x", data[i]);
+      int rc = snprintf(dbg_ptr, str_size-(dbg_ptr-dbg_string), " %02x", data[i]);
+      if (rc < 0 || rc > str_size-(dbg_ptr-dbg_string))
+        break;
+      dbg_ptr += rc;
     }
   } else {
     dbg_ptr += vsnprintf(dbg_ptr, str_size-(dbg_ptr-dbg_string), fstring, arg_ptr);

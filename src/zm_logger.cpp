@@ -481,7 +481,10 @@ void Logger::logPrint(bool hex, const char *filepath, int line, int level, const
     int i;
     logPtr += snprintf(logPtr, sizeof(logString)-(logPtr-logString), "%d:", len);
     for ( i = 0; i < len; i++ ) {
-      logPtr += snprintf(logPtr, sizeof(logString)-(logPtr-logString), " %02x", data[i]);
+      int rc = snprintf(logPtr, sizeof(logString)-(logPtr-logString), " %02x", data[i]);
+      if (rc < 0 || static_cast<size_t>(rc) > sizeof(logString)-(logPtr-logString))
+        break;
+      logPtr += rc;
     }
   } else {
     logPtr += vsnprintf(logPtr, sizeof(logString)-(logPtr-logString), fstring, argPtr);

@@ -2739,23 +2739,27 @@ void Monitor::TimestampImage(Image *ts_image, SystemTimePoint ts_time) const {
   while (*s_ptr && ((unsigned int)(d_ptr - label_text) < (unsigned int) sizeof(label_text))) {
     if ( *s_ptr == config.timestamp_code_char[0] ) {
       bool found_macro = false;
+      int rc = 0;
       switch ( *(s_ptr+1) ) {
         case 'N' :
-          d_ptr += snprintf(d_ptr, sizeof(label_text)-(d_ptr-label_text), "%s", name.c_str());
+          rc = snprintf(d_ptr, sizeof(label_text)-(d_ptr-label_text), "%s", name.c_str());
           found_macro = true;
           break;
         case 'Q' :
-          d_ptr += snprintf(d_ptr, sizeof(label_text)-(d_ptr-label_text), "%s", trigger_data->trigger_showtext);
+          rc = snprintf(d_ptr, sizeof(label_text)-(d_ptr-label_text), "%s", trigger_data->trigger_showtext);
           found_macro = true;
           break;
         case 'f' :
           typedef std::chrono::duration<int64, std::centi> Centiseconds;
           Centiseconds centi_sec = std::chrono::duration_cast<Centiseconds>(
               ts_time.time_since_epoch() - std::chrono::duration_cast<Seconds>(ts_time.time_since_epoch()));
-          d_ptr += snprintf(d_ptr, sizeof(label_text) - (d_ptr - label_text), "%02lld", static_cast<long long int>(centi_sec.count()));
+          rc = snprintf(d_ptr, sizeof(label_text) - (d_ptr - label_text), "%02lld", static_cast<long long int>(centi_sec.count()));
           found_macro = true;
           break;
       }
+      if (rc < 0 || static_cast<size_t>(rc) > sizeof(label_text) - (d_ptr - label_text))
+        break;
+      d_ptr += rc;
       if ( found_macro ) {
         s_ptr += 2;
         continue;
